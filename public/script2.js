@@ -221,20 +221,21 @@ function openProductModal(product = null) {
   editingProduct = product;
   const modal = document.getElementById("product-modal");
   const title = document.getElementById("product-modal-title");
-  const form = document.getElementById("product-form");
 
   if (product) {
     title.textContent = "Edit Product";
-    form.product_name.value = product.name;
-    form.product_description.value = product.description || "";
-    form.product_category.value = product.category || "Gold";
-    form.product_weight.value = product.weight || "";
-    form.product_purity.value = product.purity || "24K";
-    form.product_price.value = product.price;
-    form.product_stock.value = product.stock_quantity;
+    document.getElementById("product-name").value = product.name;
+    document.getElementById("product-description").value =
+      product.description || "";
+    document.getElementById("product-category").value =
+      product.category || "Gold";
+    document.getElementById("product-weight").value = product.weight || "";
+    document.getElementById("product-purity").value = product.purity || "24K";
+    document.getElementById("product-price").value = product.price;
+    document.getElementById("product-stock").value = product.stock_quantity;
   } else {
     title.textContent = "Add Product";
-    form.reset();
+    document.getElementById("product-form").reset();
   }
 
   modal.style.display = "block";
@@ -252,13 +253,14 @@ document
     e.preventDefault();
 
     const formData = {
-      name: this.product_name.value,
-      description: this.product_description.value,
-      category: this.product_category.value,
-      weight: parseFloat(this.product_weight.value) || null,
-      purity: this.product_purity.value,
-      price: parseFloat(this.product_price.value),
-      stock_quantity: parseInt(this.product_stock.value),
+      name: document.getElementById("product-name").value,
+      description: document.getElementById("product-description").value,
+      category: document.getElementById("product-category").value,
+      weight:
+        parseFloat(document.getElementById("product-weight").value) || null,
+      purity: document.getElementById("product-purity").value,
+      price: parseFloat(document.getElementById("product-price").value),
+      stock_quantity: parseInt(document.getElementById("product-stock").value),
     };
 
     try {
@@ -372,18 +374,17 @@ function openCustomerModal(customer = null) {
   editingCustomer = customer;
   const modal = document.getElementById("customer-modal");
   const title = document.getElementById("customer-modal-title");
-  const form = document.getElementById("customer-form");
 
   if (customer) {
     title.textContent = "Edit Customer";
-    form.customer_name.value = customer.name;
-    form.customer_email.value = customer.email || "";
-    form.customer_phone.value = customer.phone || "";
-    form.customer_address.value = customer.address || "";
-    form.customer_gst.value = customer.gst_number || "";
+    document.getElementById("customer-name").value = customer.name;
+    document.getElementById("customer-email").value = customer.email || "";
+    document.getElementById("customer-phone").value = customer.phone || "";
+    document.getElementById("customer-address").value = customer.address || "";
+    document.getElementById("customer-gst").value = customer.gst_number || "";
   } else {
     title.textContent = "Add Customer";
-    form.reset();
+    document.getElementById("customer-form").reset();
   }
 
   modal.style.display = "block";
@@ -401,11 +402,11 @@ document
     e.preventDefault();
 
     const formData = {
-      name: this.customer_name.value,
-      email: this.customer_email.value,
-      phone: this.customer_phone.value,
-      address: this.customer_address.value,
-      gst_number: this.customer_gst.value,
+      name: document.getElementById("customer-name").value,
+      email: document.getElementById("customer-email").value,
+      phone: document.getElementById("customer-phone").value,
+      address: document.getElementById("customer-address").value,
+      gst_number: document.getElementById("customer-gst").value,
     };
 
     try {

@@ -232,16 +232,19 @@
         <form id="product-form">
           <div class="form-group">
             <label for="product-name">Product Name</label>
-            <input type="text" id="product-name" required />
+            <input type="text" id="product-name" name="product_name" required />
           </div>
           <div class="form-group">
             <label for="product-description">Description</label>
-            <textarea id="product-description"></textarea>
+            <textarea
+              id="product-description"
+              name="product_description"
+            ></textarea>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="product-category">Category</label>
-              <select id="product-category">
+              <select id="product-category" name="product_category">
                 <option value="Gold">Gold</option>
                 <option value="Silver">Silver</option>
                 <option value="Platinum">Platinum</option>
@@ -252,13 +255,18 @@
             </div>
             <div class="form-group">
               <label for="product-weight">Weight (grams)</label>
-              <input type="number" id="product-weight" step="0.01" />
+              <input
+                type="number"
+                id="product-weight"
+                name="product_weight"
+                step="0.01"
+              />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="product-purity">Purity</label>
-              <select id="product-purity">
+              <select id="product-purity" name="product_purity">
                 <option value="24K">24K</option>
                 <option value="22K">22K</option>
                 <option value="18K">18K</option>
@@ -269,12 +277,23 @@
             </div>
             <div class="form-group">
               <label for="product-price">Price (₹)</label>
-              <input type="number" id="product-price" step="0.01" required />
+              <input
+                type="number"
+                id="product-price"
+                name="product_price"
+                step="0.01"
+                required
+              />
             </div>
           </div>
           <div class="form-group">
             <label for="product-stock">Stock Quantity</label>
-            <input type="number" id="product-stock" required />
+            <input
+              type="number"
+              id="product-stock"
+              name="product_stock"
+              required
+            />
           </div>
           <div class="form-actions">
             <button
@@ -300,23 +319,28 @@
         <form id="customer-form">
           <div class="form-group">
             <label for="customer-name">Customer Name</label>
-            <input type="text" id="customer-name" required />
+            <input
+              type="text"
+              id="customer-name"
+              name="customer_name"
+              required
+            />
           </div>
           <div class="form-group">
             <label for="customer-email">Email</label>
-            <input type="email" id="customer-email" />
+            <input type="email" id="customer-email" name="customer_email" />
           </div>
           <div class="form-group">
             <label for="customer-phone">Phone</label>
-            <input type="tel" id="customer-phone" />
+            <input type="tel" id="customer-phone" name="customer_phone" />
           </div>
           <div class="form-group">
             <label for="customer-address">Address</label>
-            <textarea id="customer-address"></textarea>
+            <textarea id="customer-address" name="customer_address"></textarea>
           </div>
           <div class="form-group">
             <label for="customer-gst">GST Number</label>
-            <input type="text" id="customer-gst" />
+            <input type="text" id="customer-gst" name="customer_gst" />
           </div>
           <div class="form-actions">
             <button
@@ -422,6 +446,6 @@
       </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script2.js"></script>
   </body>
 </html>
