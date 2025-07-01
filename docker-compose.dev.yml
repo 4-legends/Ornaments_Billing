@@ -1,0 +1,31 @@
+version: "3.3"
+
+services:
+  ornaments-billing-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ornaments-billing-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reloading
+      - .:/app
+      - /app/node_modules
+      # Persist database data
+      - ornaments_dev_data:/app
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    restart: unless-stopped
+    command: npm run dev
+    networks:
+      - ornaments-dev-network
+
+volumes:
+  ornaments_dev_data:
+    driver: local
+
+networks:
+  ornaments-dev-network:
+    driver: bridge
