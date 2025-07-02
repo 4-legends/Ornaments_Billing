@@ -372,6 +372,12 @@ tr:hover {
   align-items: center;
 }
 
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .modal-header h3 {
   font-size: 1.3rem;
   font-weight: 600;

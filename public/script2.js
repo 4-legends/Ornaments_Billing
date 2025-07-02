@@ -710,6 +710,12 @@ async function viewInvoice(id) {
     const response = await fetch(`${API_BASE}/api/invoices/${id}`);
     const invoice = await response.json();
 
+    // Set current invoice ID for PDF download
+    currentInvoiceId = id;
+
+    // Show download button
+    document.getElementById("download-pdf-btn").style.display = "inline-flex";
+
     // Update modal title
     document.getElementById(
       "invoice-view-modal-title"
@@ -845,6 +851,9 @@ async function viewInvoice(id) {
 
 function closeInvoiceViewModal() {
   document.getElementById("invoice-view-modal").style.display = "none";
+  // Hide download button and reset current invoice ID
+  document.getElementById("download-pdf-btn").style.display = "none";
+  currentInvoiceId = null;
 }
 
 async function updateInvoiceStatus(invoiceId, newStatus) {
@@ -879,6 +888,37 @@ async function updateInvoiceStatus(invoiceId, newStatus) {
     if (currentInvoice) {
       select.value = currentInvoice.payment_status;
     }
+  }
+}
+
+// Global variable to store current invoice ID for PDF download
+let currentInvoiceId = null;
+
+async function downloadInvoicePDF() {
+  if (!currentInvoiceId) {
+    showMessage("No invoice selected for PDF download", "error");
+    return;
+  }
+
+  try {
+    // Show loading message
+    showMessage("Generating PDF...", "info");
+
+    // Create a temporary link to download the PDF
+    const link = document.createElement("a");
+    link.href = `${API_BASE}/api/invoices/${currentInvoiceId}/pdf`;
+    link.download = `Invoice-${currentInvoiceId}.pdf`;
+    link.target = "_blank";
+
+    // Trigger the download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showMessage("PDF download started", "success");
+  } catch (error) {
+    console.error("Error downloading PDF:", error);
+    showMessage("Error downloading PDF", "error");
   }
 }
 

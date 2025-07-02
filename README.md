@@ -41,6 +41,11 @@ A comprehensive billing and inventory management system specifically designed fo
   - Update invoice status in real-time
   - View detailed invoice information with status change capability
   - Professional invoice view modal with complete details
+- **PDF Generation**:
+  - Generate professional PDF invoices
+  - Download invoices as PDF files
+  - Complete invoice details with company branding
+  - Professional layout with all invoice items and totals
 
 ### 📊 Reports & Analytics
 
@@ -56,6 +61,7 @@ A comprehensive billing and inventory management system specifically designed fo
 - **Frontend**: Vanilla JavaScript with modern CSS
 - **UI Framework**: Custom responsive design with Font Awesome icons
 - **Styling**: CSS Grid, Flexbox, and modern design principles
+- **PDF Generation**: PDFKit for professional invoice PDFs
 - **Containerization**: Docker with Docker Compose
 
 ## Quick Start with Docker 🐳

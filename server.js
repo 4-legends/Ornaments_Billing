@@ -4,6 +4,8 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
 const fs = require("fs");
+const PDFDocument = require("pdfkit");
+const moment = require("moment");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -365,6 +367,259 @@ app.put("/api/invoices/:id/status", (req, res) => {
     res.json({ message: "Invoice status updated successfully" });
   });
 });
+
+// Generate PDF for invoice
+app.get("/api/invoices/:id/pdf", (req, res) => {
+  const sql = `SELECT i.*, c.name as customer_name, c.email, c.phone, c.address, c.gst_number
+                FROM invoices i 
+                LEFT JOIN customers c ON i.customer_id = c.id 
+                WHERE i.id = ?`;
+
+  db.get(sql, [req.params.id], (err, invoice) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+
+    if (!invoice) {
+      res.status(404).json({ error: "Invoice not found" });
+      return;
+    }
+
+    // Get invoice items
+    const itemsSql = `SELECT ii.*, p.name as product_name, p.description, p.category, p.weight, p.purity
+                      FROM invoice_items ii 
+                      LEFT JOIN products p ON ii.product_id = p.id 
+                      WHERE ii.invoice_id = ?`;
+
+    db.all(itemsSql, [req.params.id], (err, items) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+
+      // Generate PDF
+      generateInvoicePDF(invoice, items, res);
+    });
+  });
+});
+
+// Function to generate PDF
+function generateInvoicePDF(invoice, items, res) {
+  const doc = new PDFDocument({ margin: 50 });
+
+  // Set response headers
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="Invoice-${invoice.invoice_number}.pdf"`
+  );
+
+  // Pipe PDF to response
+  doc.pipe(res);
+
+  // Add company header
+  doc
+    .fontSize(24)
+    .font("Helvetica-Bold")
+    .text("ORNAMENTS BILLING SYSTEM", { align: "center" });
+
+  doc
+    .fontSize(12)
+    .font("Helvetica")
+    .text("Professional Jewellery & Ornaments", { align: "center" })
+    .text("123 Jewellery Street, City - 123456", { align: "center" })
+    .text("Phone: +91 9876543210 | Email: info@ornaments.com", {
+      align: "center",
+    })
+    .text("GST: 27ABCDE1234F1Z5", { align: "center" })
+    .moveDown(2);
+
+  // Invoice header
+  doc
+    .fontSize(18)
+    .font("Helvetica-Bold")
+    .text("INVOICE", { align: "center" })
+    .moveDown();
+
+  // Invoice details section
+  let y = doc.y;
+  doc.fontSize(12).font("Helvetica-Bold").text("Invoice Details:", 50, y);
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .text(`Invoice Number: ${invoice.invoice_number}`, 50, y + 18)
+    .text(
+      `Date: ${moment(invoice.invoice_date).format("DD/MM/YYYY")}`,
+      50,
+      y + 33
+    )
+    .text(`Status: ${invoice.payment_status.toUpperCase()}`, 50, y + 48);
+
+  doc.fontSize(12).font("Helvetica-Bold").text("Bill To:", 330, y);
+  let cy = y + 18;
+  doc.fontSize(10).font("Helvetica").text(invoice.customer_name, 330, cy);
+  cy += 15;
+  if (invoice.address) {
+    doc.text(invoice.address, 330, cy);
+    cy += 15;
+  }
+  if (invoice.phone) {
+    doc.text(`Phone: ${invoice.phone}`, 330, cy);
+    cy += 15;
+  }
+  if (invoice.email) {
+    doc.text(`Email: ${invoice.email}`, 330, cy);
+    cy += 15;
+  }
+  if (invoice.gst_number) {
+    doc.text(`GST: ${invoice.gst_number}`, 330, cy);
+    cy += 15;
+  }
+
+  doc.moveDown(3);
+  y = doc.y + 10;
+
+  // Table columns
+  const columns = [
+    { label: "Item", width: 70 },
+    { label: "Description", width: 100 },
+    { label: "Category", width: 60 },
+    { label: "Weight", width: 50 },
+    { label: "Purity", width: 45 },
+    { label: "Qty", width: 30 },
+    { label: "Unit Price", width: 70 },
+    { label: "Total", width: 70 },
+  ];
+  const startX = 50;
+  let tableY = y;
+
+  // Table header
+  doc.fontSize(11).font("Helvetica-Bold");
+  let x = startX;
+  columns.forEach((col) => {
+    doc.text(col.label, x, tableY, { width: col.width, align: "left" });
+    x += col.width;
+  });
+  // Draw header line
+  doc
+    .moveTo(startX, tableY + 15)
+    .lineTo(startX + columns.reduce((a, c) => a + c.width, 0), tableY + 15)
+    .stroke();
+
+  // Table rows
+  let rowY = tableY + 22;
+  doc.fontSize(10).font("Helvetica");
+  items.forEach((item) => {
+    x = startX;
+    doc.text(item.product_name || "N/A", x, rowY, { width: columns[0].width });
+    x += columns[0].width;
+    doc.text(item.description || "N/A", x, rowY, { width: columns[1].width });
+    x += columns[1].width;
+    doc.text(item.category || "N/A", x, rowY, { width: columns[2].width });
+    x += columns[2].width;
+    doc.text(item.weight ? `${item.weight}g` : "N/A", x, rowY, {
+      width: columns[3].width,
+    });
+    x += columns[3].width;
+    doc.text(item.purity || "N/A", x, rowY, { width: columns[4].width });
+    x += columns[4].width;
+    doc.text(item.quantity.toString(), x, rowY, {
+      width: columns[5].width,
+      align: "right",
+    });
+    x += columns[5].width;
+    doc.text(`₹${item.unit_price.toLocaleString()}`, x, rowY, {
+      width: columns[6].width,
+      align: "right",
+    });
+    x += columns[6].width;
+    doc.text(`₹${item.total_price.toLocaleString()}`, x, rowY, {
+      width: columns[7].width,
+      align: "right",
+    });
+    rowY += 18;
+    // Add page break if needed
+    if (rowY > 700) {
+      doc.addPage();
+      rowY = 50;
+    }
+  });
+  // Draw bottom line
+  doc
+    .moveTo(startX, rowY)
+    .lineTo(startX + columns.reduce((a, c) => a + c.width, 0), rowY)
+    .stroke();
+
+  // Summary box
+  let summaryBoxY = rowY + 20;
+  let summaryBoxX =
+    startX + columns.slice(0, -3).reduce((a, c) => a + c.width, 0) + 10;
+  let boxWidth = columns.slice(-3).reduce((a, c) => a + c.width, 0) + 30;
+  let boxHeight = 70;
+  doc.roundedRect(summaryBoxX, summaryBoxY, boxWidth, boxHeight, 8).stroke();
+  let sy = summaryBoxY + 10;
+  doc
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .text("Summary:", summaryBoxX + 10, sy);
+  sy += 18;
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .text(
+      `Subtotal: ₹${invoice.total_amount.toLocaleString()}`,
+      summaryBoxX + 10,
+      sy
+    );
+  sy += 15;
+  doc.text(
+    `Tax (${((invoice.tax_amount / invoice.total_amount) * 100).toFixed(
+      1
+    )}%): ₹${invoice.tax_amount.toLocaleString()}`,
+    summaryBoxX + 10,
+    sy
+  );
+  sy += 15;
+  doc.text(
+    `Discount: ₹${invoice.discount_amount.toLocaleString()}`,
+    summaryBoxX + 10,
+    sy
+  );
+  sy += 15;
+  doc
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .text(
+      `Total: ₹${invoice.final_amount.toLocaleString()}`,
+      summaryBoxX + 10,
+      sy
+    );
+
+  // Notes section
+  if (invoice.notes) {
+    doc.moveDown(2);
+    doc
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text("Notes:", startX, sy + 40);
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text(invoice.notes, startX, sy + 58, { width: 350 });
+  }
+
+  // Footer
+  doc.moveDown(6);
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .text("Thank you for your business!", { align: "center" })
+    .text("This is a computer generated invoice", { align: "center" });
+
+  // Finalize PDF
+  doc.end();
+}
 
 // Reports API
 app.get("/api/reports/sales", (req, res) => {
