@@ -36,7 +36,11 @@ A comprehensive billing and inventory management system specifically designed fo
 - **Tax Calculation**: Automatic GST calculation (default 18%)
 - **Discount Support**: Apply percentage-based discounts
 - **Unique Invoice Numbers**: Auto-generated sequential invoice numbers
-- **Payment Status Tracking**: Monitor pending and paid invoices
+- **Payment Status Management**:
+  - Track invoice status (Pending, Paid, Cancelled, Overdue)
+  - Update invoice status in real-time
+  - View detailed invoice information with status change capability
+  - Professional invoice view modal with complete details
 
 ### 📊 Reports & Analytics
 

@@ -710,14 +710,175 @@ async function viewInvoice(id) {
     const response = await fetch(`${API_BASE}/api/invoices/${id}`);
     const invoice = await response.json();
 
-    // For now, just show an alert with invoice details
-    // In a real application, you might want to open a detailed view modal
-    alert(
-      `Invoice #${invoice.invoice_number}\nCustomer: ${invoice.customer_name}\nTotal: ₹${invoice.final_amount}`
-    );
+    // Update modal title
+    document.getElementById(
+      "invoice-view-modal-title"
+    ).textContent = `Invoice #${invoice.invoice_number}`;
+
+    // Create invoice view content
+    const content = document.getElementById("invoice-view-content");
+    content.innerHTML = `
+      <div class="invoice-view-header">
+        <div class="invoice-info">
+          <div class="info-row">
+            <strong>Invoice Number:</strong> ${invoice.invoice_number}
+          </div>
+          <div class="info-row">
+            <strong>Date:</strong> ${new Date(
+              invoice.invoice_date
+            ).toLocaleDateString()}
+          </div>
+          <div class="info-row">
+            <strong>Status:</strong> 
+            <select id="invoice-status-select" onchange="updateInvoiceStatus(${
+              invoice.id
+            }, this.value)">
+              <option value="pending" ${
+                invoice.payment_status === "pending" ? "selected" : ""
+              }>Pending</option>
+              <option value="paid" ${
+                invoice.payment_status === "paid" ? "selected" : ""
+              }>Paid</option>
+              <option value="cancelled" ${
+                invoice.payment_status === "cancelled" ? "selected" : ""
+              }>Cancelled</option>
+              <option value="overdue" ${
+                invoice.payment_status === "overdue" ? "selected" : ""
+              }>Overdue</option>
+            </select>
+          </div>
+        </div>
+        <div class="customer-info">
+          <h4>Customer Information</h4>
+          <div class="info-row">
+            <strong>Name:</strong> ${invoice.customer_name || "N/A"}
+          </div>
+          <div class="info-row">
+            <strong>Email:</strong> ${invoice.email || "N/A"}
+          </div>
+          <div class="info-row">
+            <strong>Phone:</strong> ${invoice.phone || "N/A"}
+          </div>
+          <div class="info-row">
+            <strong>Address:</strong> ${invoice.address || "N/A"}
+          </div>
+          <div class="info-row">
+            <strong>GST Number:</strong> ${invoice.gst_number || "N/A"}
+          </div>
+        </div>
+      </div>
+
+      <div class="invoice-items-view">
+        <h4>Invoice Items</h4>
+        <table class="invoice-items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Weight</th>
+              <th>Purity</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoice.items
+              .map(
+                (item) => `
+              <tr>
+                <td>${item.product_name}</td>
+                <td>${item.description || "-"}</td>
+                <td>${item.category || "-"}</td>
+                <td>${item.weight ? `${item.weight}g` : "-"}</td>
+                <td>${item.purity || "-"}</td>
+                <td>${item.quantity}</td>
+                <td>₹${item.unit_price.toLocaleString()}</td>
+                <td>₹${item.total_price.toLocaleString()}</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invoice-summary-view">
+        <h4>Invoice Summary</h4>
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span>₹${invoice.total_amount.toLocaleString()}</span>
+        </div>
+        <div class="summary-row">
+          <span>Tax Amount:</span>
+          <span>₹${invoice.tax_amount.toLocaleString()}</span>
+        </div>
+        <div class="summary-row">
+          <span>Discount Amount:</span>
+          <span>₹${invoice.discount_amount.toLocaleString()}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Final Amount:</span>
+          <span>₹${invoice.final_amount.toLocaleString()}</span>
+        </div>
+        ${
+          invoice.notes
+            ? `
+          <div class="invoice-notes">
+            <h4>Notes</h4>
+            <p>${invoice.notes}</p>
+          </div>
+        `
+            : ""
+        }
+      </div>
+    `;
+
+    // Show the modal
+    document.getElementById("invoice-view-modal").style.display = "block";
   } catch (error) {
     console.error("Error loading invoice:", error);
     showMessage("Error loading invoice details", "error");
+  }
+}
+
+function closeInvoiceViewModal() {
+  document.getElementById("invoice-view-modal").style.display = "none";
+}
+
+async function updateInvoiceStatus(invoiceId, newStatus) {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/invoices/${invoiceId}/status`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payment_status: newStatus }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update invoice status");
+    }
+
+    const result = await response.json();
+    showMessage(result.message, "success");
+
+    // Reload invoices to update the display
+    loadInvoices();
+  } catch (error) {
+    console.error("Error updating invoice status:", error);
+    showMessage("Error updating invoice status", "error");
+
+    // Reset the select to the previous value
+    const select = document.getElementById("invoice-status-select");
+    const currentInvoice = invoices.find((inv) => inv.id == invoiceId);
+    if (currentInvoice) {
+      select.value = currentInvoice.payment_status;
+    }
   }
 }
 

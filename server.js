@@ -334,6 +334,38 @@ app.get("/api/invoices/:id", (req, res) => {
   });
 });
 
+// Update invoice status
+app.put("/api/invoices/:id/status", (req, res) => {
+  const { payment_status } = req.body;
+
+  if (
+    !payment_status ||
+    !["pending", "paid", "cancelled", "overdue"].includes(payment_status)
+  ) {
+    res.status(400).json({
+      error:
+        "Invalid payment status. Must be one of: pending, paid, cancelled, overdue",
+    });
+    return;
+  }
+
+  const sql = `UPDATE invoices SET payment_status = ? WHERE id = ?`;
+
+  db.run(sql, [payment_status, req.params.id], function (err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+
+    if (this.changes === 0) {
+      res.status(404).json({ error: "Invoice not found" });
+      return;
+    }
+
+    res.json({ message: "Invoice status updated successfully" });
+  });
+});
+
 // Reports API
 app.get("/api/reports/sales", (req, res) => {
   const { start_date, end_date } = req.query;
